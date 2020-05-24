@@ -1,11 +1,32 @@
 import React, {useState} from 'react';
 import './App.css';
-import Button from 'react-bootstrap/Button'
-import { ArrowUp, ArrowDown}  from 'react-bootstrap-icons'
+import Button from 'react-bootstrap/Button';
+import { ArrowUp, ArrowDown}  from 'react-bootstrap-icons';
+import { PDFDocument } from "pdf-lib";
+const fs = window.require('fs'); // VERY important to use window.require instead of require https://github.com/electron/electron/issues/7300
 
+
+async function mergePdfs(pdfs) {
+  let pages = [];
+  const mergedDoc = await PDFDocument.create();
+  for (const pdf of pdfs) {
+    let uint8Array = fs.readFileSync(pdf)
+    let pdfDoc = await PDFDocument.load(uint8Array);
+    let docPages = pdfDoc.getPages();
+    let pageIndices = [...Array(docPages.length).keys()]
+    let copiedPages = await mergedDoc.copyPages(pdfDoc, pageIndices)
+    pages.push(...copiedPages);
+  }
+  console.log(pages);
+  
+  pages.forEach(page => {
+    mergedDoc.addPage(page)
+  })
+  const pdfBytes = await mergedDoc.save()
+  fs.writeFile('output.pdf', pdfBytes, (e) => {console.log(e);})
+}
 
 function App() {
-
   const [files, setFiles] = useState([])
 
   const ondrop = (e) => {
@@ -53,6 +74,7 @@ function App() {
         Drag your files here
       </div>
       <FileList />
+      <Button onClick={() => (mergePdfs(files.map(f => (f.path))))}>Merge PDFs</Button>
     </div>
   );
 }
