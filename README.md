@@ -4,7 +4,7 @@ Bootstrapped from https://github.com/Smelliott94/react-electron.baseline.
 A fast and no-frills way of conatenating pdf documents into a single file without the file
 size restrictions of other free online tools.
 
-## Getting Started with development
+## Getting Started
 NodeJS and NPM are required prior to installation.
 1. Clone this repository
 2. Run `cd src; npm install` to install dependencies
