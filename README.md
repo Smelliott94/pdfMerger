@@ -1,8 +1,11 @@
-# React-Electron Baseline
-This repo is intended to be a quick way of getting up and running with a new electron app
-which uses React instead of regular JS.
+# PDFMerger
+Bootstrapped from https://github.com/Smelliott94/react-electron.baseline.
 
-## Getting Started
+A fast and no-frills way of conatenating pdf documents into a single file without the file
+size restrictions of other free online tools.
+
+## Getting Started with development
+NodeJS and NPM are required prior to installation.
 1. Clone this repository
 2. Run `cd src; npm install` to install dependencies
 3. Run `npm run start` to launch the app in dev mode
