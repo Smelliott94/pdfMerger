@@ -61,7 +61,7 @@ function App() {
   }
 
   const FileList = () => (
-    <div>
+    <div id="files">
       {files.map((file, i) =>
         <p key={i}>{file.name} <Button onClick={ () => (moveup(i)) }><ArrowUp /></Button> <Button onClick={ () => (movedown(i)) }><ArrowDown /></Button> </p>
       )}
@@ -69,7 +69,7 @@ function App() {
   )
 
   return (
-    <div className="App">
+    <div className="App" onDrop={ondrop} onDragOver={ondragover}>
       <div id="drag-file" onDrop={ondrop} onDragOver={ondragover}>
         Drag your files here
       </div>
