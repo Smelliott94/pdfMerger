@@ -6,7 +6,10 @@
   "author": "Marcus Elliott",
   "description": "App for merging pdfs",
   "build": {
-    "appId": "app.id"
+    "appId": "app.id",
+    "win": {
+      "icon": "./build/icon.ico"
+    }
   },
   "homepage": "./",
   "dependencies": {

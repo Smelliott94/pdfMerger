@@ -10,7 +10,7 @@ function createWindow () {
       nodeIntegration: true,
       enableRemoteModule: true
     },
-    icon: path.join(__dirname, 'pdfIcon.ico')
+    icon: __dirname + '/icon.ico'
   })
 
   // and load the index.html of the app.
