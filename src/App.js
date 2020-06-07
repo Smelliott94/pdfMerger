@@ -3,12 +3,13 @@ import './App.css';
 import Button from 'react-bootstrap/Button';
 import { ArrowUp, ArrowDown}  from 'react-bootstrap-icons';
 import { PDFDocument } from "pdf-lib";
-const fs = window.require('fs'); // VERY important to use window.require instead of require https://github.com/electron/electron/issues/7300
 
+const fs = window.require('fs'); // VERY important to use window.require instead of require https://github.com/electron/electron/issues/7300
+const { dialog, BrowserWindow } = window.require('electron').remote;
 
 async function mergePdfs(pdfs) {
   let pages = [];
-  const mergedDoc = await PDFDocument.create();
+  let mergedDoc = await PDFDocument.create();
   for (const pdf of pdfs) {
     let uint8Array = fs.readFileSync(pdf)
     let pdfDoc = await PDFDocument.load(uint8Array);
@@ -16,14 +17,14 @@ async function mergePdfs(pdfs) {
     let pageIndices = [...Array(docPages.length).keys()]
     let copiedPages = await mergedDoc.copyPages(pdfDoc, pageIndices)
     pages.push(...copiedPages);
-  }
-  console.log(pages);
+  };
   
   pages.forEach(page => {
     mergedDoc.addPage(page)
   })
-  const pdfBytes = await mergedDoc.save()
-  fs.writeFile('output.pdf', pdfBytes, (e) => {console.log(e);})
+  let pdfBytes = await mergedDoc.save()
+  fs.writeFile(`output_${Date.now()}.pdf`, pdfBytes, 'utf8', (e) => {console.log(e)} );
+  console.log(`output_${Date.now()}.pdf written`);
 }
 
 function App() {
@@ -31,10 +32,16 @@ function App() {
 
   const ondrop = (e) => {
     e.preventDefault();
-    setFiles([...e.dataTransfer.files]);
-    Array.from(e.dataTransfer.files).forEach(f => {
-      console.log(f);
-    });
+    setFiles([...e.dataTransfer.files].map(f => (f.path)));
+  }
+
+  const handleSelector = () => {
+    dialog.showOpenDialog({
+      filters: [
+        {name: 'PDF', extensions: ['pdf']}
+      ],
+      properties: ['multiSelections']
+    }).then((f) => {setFiles(f.filePaths)})
   }
   
   const ondragover = (e) => {
@@ -63,7 +70,7 @@ function App() {
   const FileList = () => (
     <div id="files">
       {files.map((file, i) =>
-        <p key={i}>{file.name} <Button onClick={ () => (moveup(i)) }><ArrowUp /></Button> <Button onClick={ () => (movedown(i)) }><ArrowDown /></Button> </p>
+        <div key={i}>{`${i+1}.) ${file}`} <Button onClick={ () => (moveup(i)) }><ArrowUp /></Button><Button onClick={ () => (movedown(i)) }><ArrowDown /></Button> </div>
       )}
     </div>
   )
@@ -71,10 +78,10 @@ function App() {
   return (
     <div className="App" onDrop={ondrop} onDragOver={ondragover}>
       <div id="drag-file" onDrop={ondrop} onDragOver={ondragover}>
-        Drag your files here
+        <Button onClick={handleSelector}>Select</Button> or drag your files here
       </div>
       <FileList />
-      <Button onClick={() => (mergePdfs(files.map(f => (f.path))))}>Merge PDFs</Button>
+      <Button onClick={() => {if (files.length > 0) mergePdfs(files).then(BrowserWindow.getFocusedWindow().reload())}}>Merge PDFs</Button>
     </div>
   );
 }
