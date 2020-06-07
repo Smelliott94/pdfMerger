@@ -1,11 +1,13 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import Button from 'react-bootstrap/Button';
-import { ArrowUp, ArrowDown}  from 'react-bootstrap-icons';
+import { ArrowUp, ArrowDown } from 'react-bootstrap-icons';
 import { PDFDocument } from "pdf-lib";
 
+const path = window.require('path');
 const fs = window.require('fs'); // VERY important to use window.require instead of require https://github.com/electron/electron/issues/7300
-const { dialog, BrowserWindow } = window.require('electron').remote;
+const { dialog, BrowserWindow, shell} = window.require('electron').remote;
+
 
 async function mergePdfs(pdfs) {
   let pages = [];
@@ -18,13 +20,24 @@ async function mergePdfs(pdfs) {
     let copiedPages = await mergedDoc.copyPages(pdfDoc, pageIndices)
     pages.push(...copiedPages);
   };
-  
+
   pages.forEach(page => {
     mergedDoc.addPage(page)
   })
   let pdfBytes = await mergedDoc.save()
-  fs.writeFile(`output_${Date.now()}.pdf`, pdfBytes, 'utf8', (e) => {console.log(e)} );
-  console.log(`output_${Date.now()}.pdf written`);
+  let fname = `output_${Date.now()}.pdf`
+  fs.writeFile(fname, pdfBytes, 'utf8', (e) => { console.log(e) });
+  return path.join(path.resolve('.'), fname);
+}
+
+function confirmationDialog(fpath) {
+  dialog.showMessageBox({
+    type: 'info',
+    buttons: ['open', 'OK'],
+    message: 'file successfully written to ' + fpath
+  })
+  .then(btnIndex => { if (btnIndex.response === 0) shell.showItemInFolder(fpath)})
+  .then(() => {BrowserWindow.getFocusedWindow().reload()})
 }
 
 function App() {
@@ -38,23 +51,23 @@ function App() {
   const handleSelector = () => {
     dialog.showOpenDialog({
       filters: [
-        {name: 'PDF', extensions: ['pdf']}
+        { name: 'PDF', extensions: ['pdf'] }
       ],
       properties: ['multiSelections']
-    }).then((f) => {setFiles(f.filePaths)})
+    }).then((f) => { setFiles(f.filePaths) })
   }
-  
+
   const ondragover = (e) => {
     e.stopPropagation();
     e.preventDefault();
   }
-  
+
   const moveup = (index) => {
     if (index < 1) return;
     var newFiles = [...files];
     var file = files[index];
     newFiles.splice(index, 1);
-    newFiles.splice(index-1, 0, file);
+    newFiles.splice(index - 1, 0, file);
     setFiles(newFiles);
   }
 
@@ -63,14 +76,14 @@ function App() {
     var newFiles = [...files];
     var file = files[index];
     newFiles.splice(index, 1);
-    newFiles.splice(index+1, 0, file);
+    newFiles.splice(index + 1, 0, file);
     setFiles(newFiles);
   }
 
   const FileList = () => (
     <div id="files">
       {files.map((file, i) =>
-        <div key={i}>{`${i+1}.) ${file}`} <Button onClick={ () => (moveup(i)) }><ArrowUp /></Button><Button onClick={ () => (movedown(i)) }><ArrowDown /></Button> </div>
+        <div key={i}>{`${i + 1}.) ${file}`} <Button onClick={() => (moveup(i))}><ArrowUp /></Button><Button onClick={() => (movedown(i))}><ArrowDown /></Button> </div>
       )}
     </div>
   )
@@ -81,7 +94,12 @@ function App() {
         <Button onClick={handleSelector}>Select</Button> or drag your files here
       </div>
       <FileList />
-      <Button onClick={() => {if (files.length > 0) mergePdfs(files).then(BrowserWindow.getFocusedWindow().reload())}}>Merge PDFs</Button>
+      <Button onClick={() => {
+        if (files.length > 0) {
+          mergePdfs(files)
+          .then((fpath) => confirmationDialog(fpath))
+        }
+      }}>Merge PDFs</Button>
     </div>
   );
 }
