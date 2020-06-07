@@ -9,7 +9,8 @@ function createWindow () {
     webPreferences: {
       nodeIntegration: true,
       enableRemoteModule: true
-    }
+    },
+    icon: path.join(__dirname, 'pdfIcon.ico')
   })
 
   // and load the index.html of the app.
